@@ -10,6 +10,7 @@ module CiscoScrypt
     # Based on the John The Ripper
     # https://github.com/openwall/john/blob/186c9ae1e421618962a7446fa22f9d678cd6b0a9/run/pass_gen.pl#L994
     # https://github.com/videgro/cisco-password-hashes
+    # @!visibility private
     def crypt_to64_wpa(value, number_of_iterations)
       itoa64 = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
       result = +""
@@ -23,6 +24,8 @@ module CiscoScrypt
 
     # Cisco uses non-standard base64 encoding, which happens to be the same
     # implementation as used for WPA passwords.
+    #
+    # @!visibility private
     # rubocop: disable Metrics/MethodLength
     def base64_wpa(byte_string)
       len = byte_string.size
@@ -44,6 +47,7 @@ module CiscoScrypt
     end
     # rubocop: enable Metrics/MethodLength
 
+    # @!visibility private
     def full_bytes(byte_string, idx)
       offset = idx * 3
       c = byte_string[offset].ord
@@ -53,12 +57,14 @@ module CiscoScrypt
       crypt_to64_wpa(l, 4)
     end
 
+    # @!visibility private
     def single_byte(byte_string, len)
       c = byte_string[len - 1].ord
       l = c << 16
       crypt_to64_wpa(l, 2)
     end
 
+    # @!visibility private
     def two_bytes(byte_string, len)
       c = byte_string[len - 2].ord
       b = byte_string[len - 1].ord
@@ -66,6 +72,9 @@ module CiscoScrypt
       crypt_to64_wpa(l, 3)
     end
 
+    # Generate Cisco Type 9 password hash
+    # @param password [String] cleartext password
+    # @param salt [String] static salt to be used
     def generate(password, salt)
       bytes = OpenSSL::KDF.scrypt(password, N: 2**14, r: 1, p: 1, salt: salt, length: 32)
       password_hash = base64_wpa(bytes)
